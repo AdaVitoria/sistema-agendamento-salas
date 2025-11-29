@@ -1,0 +1,113 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  passwordHash  String   @map("password_hash")
+  nome          String
+  cargo         Cargo    @default(Funcionario)
+  tipoUsuario   TipoUsuario @default(Comum) @map("tipo_usuario")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  agendamentosCriados Agendamento[] @relation("CriadorAgendamento")
+  agendamentosParticipando AgendamentoUsuarios[]
+  salasCriadas Sala[] @relation("CriadorSala")
+
+  @@map("usuarios")
+}
+
+model Sala {
+  id            Int      @id @default(autoincrement())
+  nome          String
+  capacidade    Int
+  tipoSala      TipoSala @map("tipo_sala")
+  nivelAcesso   NivelAcesso @map("nivel_acesso")
+  criadorId     Int      @map("criadorId")
+
+  // Relacionamentos
+  criador       Usuario  @relation("CriadorSala", fields: [criadorId], references: [id])
+  agendamentos  Agendamento[]
+
+  @@map("salas")
+}
+
+model Agendamento {
+  id                 Int      @id @default(autoincrement())
+  codigoAgendamento  String   @unique @map("codigo_agendamento")
+  nome               String
+  data               DateTime @db.Date
+  horaInicio         DateTime @map("hora_inicio") @db.Time()
+  horaFim            DateTime @map("hora_fim") @db.Time()
+  status             StatusAgendamento @default(pendente)
+  criadorId          Int      @map("criadorId")
+  salaId             Int      @map("salaId")
+
+  // Relacionamentos
+  criador            Usuario  @relation("CriadorAgendamento", fields: [criadorId], references: [id])
+  sala               Sala     @relation(fields: [salaId], references: [id])
+  participantes      AgendamentoUsuarios[]
+
+  @@map("agendamentos")
+}
+
+model AgendamentoUsuarios {
+  agendamentoId Int @map("agendamentoId")
+  usuarioId     Int @map("usuarioId")
+
+  agendamento   Agendamento @relation(fields: [agendamentoId], references: [id], onDelete: Cascade)
+  usuario       Usuario     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@id([agendamentoId, usuarioId])
+  @@map("agendamento_usuarios")
+}
+
+enum TipoUsuario {
+  Admin
+  Comum
+
+  @@map("tipo_usuario")
+}
+
+enum Cargo {
+  Diretor
+  Gerente
+  Coordenador
+  Funcionario
+
+  @@map("cargo")
+}
+
+enum TipoSala {
+  reuniao
+  trabalho
+  treinamento
+  videoconferencia
+
+  @@map("tipo_sala")
+}
+
+enum NivelAcesso {
+  Funcionario
+  Coordenador
+  Gerente
+  Diretor
+
+  @@map("nivel_acesso")
+}
+
+enum StatusAgendamento {
+  pendente
+  ativo
+  cancelado
+
+  @@map("status")
+}
