@@ -5,9 +5,9 @@ import { createUsuarioSession } from '@/lib/session'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { email, password, nome, cargo, tipoUsuario } = body
+    const { email, password, name, cargo, tipoUsuario } = body
 
-    if (!email || !password || !nome) {
+    if (!email || !password || !name) {
       return NextResponse.json(
         { error: 'Email, senha e nome são obrigatórios' },
         { status: 400 }
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     const user = await createUsuario(
       email, 
       password, 
-      nome, 
+      name, 
       cargo || 'Funcionario',
       tipoUsuario || 'Comum'
     )

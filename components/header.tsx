@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Calendar, Clock, Shield, LogOut, Menu } from "lucide-react"
+import { Calendar, Clock, Shield, LogOut, Menu, User } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
 import { useState } from "react"
@@ -38,6 +38,7 @@ export function Header({ user }: HeaderProps) {
     { href: "/dashboard", label: "Calendário", icon: Calendar, show: true },
     { href: "/aprovacoes", label: "Aprovações", icon: Clock, show: podeAprovar },
     { href: "/admin", label: "Administração", icon: Shield, show: isAdmin },
+    { href: "/profile", label: "Perfil", icon: User, show: true },
   ]
 
   return (
