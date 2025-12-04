@@ -1,100 +1,118 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { UserWithoutPassword } from '@/lib/db'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Alert, AlertDescription } from '@/components/ui/alert'
-import { CheckCircle } from 'lucide-react'
+import { useState, useEffect } from "react";
+import { UserWithoutPassword } from "@/lib/db"; // Certifique-se que este tipo está atualizado no db.ts
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle } from "lucide-react";
+import { useRouter } from "next/navigation"; // Adicionado para o refresh
 
 interface ProfileFormProps {
-  user: UserWithoutPassword
-  onUpdate: () => void
+  user: UserWithoutPassword;
+  onUpdate: () => void;
 }
 
 export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
-  const [formData, setFormData] = useState({
-    name: user.name,
-    email: user.email,
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
-  })
-  const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const router = useRouter(); // Hook para atualizar a página visualmente
 
+  // O erro de "controlled input" acontecia aqui porque user.name era undefined.
+  // Agora usamos user.nome e o operador ?? "" para garantir que nunca seja undefined.
+  const [formData, setFormData] = useState({
+    nome: user.nome ?? "",
+    email: user.email ?? "",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  // Atualiza o form se o user mudar (ex: após um save)
   useEffect(() => {
     setFormData({
-      name: user.name,
-      email: user.email,
-      currentPassword: '',
-      newPassword: '',
-      confirmPassword: '',
-    })
-  }, [user])
+      nome: user.nome ?? "",
+      email: user.email ?? "",
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setSuccess(false)
-    setLoading(true)
+    e.preventDefault();
+    setError("");
+    setSuccess(false);
+    setLoading(true);
 
-    // Validate password change
+    // Validação de senha
     if (formData.newPassword || formData.confirmPassword) {
       if (formData.newPassword !== formData.confirmPassword) {
-        setError('As senhas não coincidem')
-        setLoading(false)
-        return
+        setError("As senhas não coincidem");
+        setLoading(false);
+        return;
       }
 
       if (formData.newPassword.length < 6) {
-        setError('A nova senha deve ter pelo menos 6 caracteres')
-        setLoading(false)
-        return
+        setError("A nova senha deve ter pelo menos 6 caracteres");
+        setLoading(false);
+        return;
       }
     }
 
     try {
+      // Monta o objeto para enviar para a API
       const body: any = {
-        name: formData.name,
+        nome: formData.nome, // Enviando como 'nome'
         email: formData.email,
-      }
+      };
 
       if (formData.newPassword) {
-        body.password = formData.newPassword
+        body.password = formData.newPassword;
       }
 
       const response = await fetch(`/api/users/${user.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
-      })
+      });
 
-      const data = await response.json()
+      const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || 'Ocorreu um erro')
-        setLoading(false)
-        return
+        setError(data.error || "Ocorreu um erro");
+        setLoading(false);
+        return;
       }
 
-      setSuccess(true)
-      setFormData({
-        ...formData,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
-      })
-      onUpdate()
+      setSuccess(true);
+
+      // Limpa os campos de senha
+      setFormData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+
+      onUpdate(); // Atualiza o estado local do pai
+      router.refresh(); // Força o Next.js a atualizar os dados do servidor na tela
     } catch (err) {
-      setError('Erro ao conectar com o servidor')
+      setError("Erro ao conectar com o servidor");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="space-y-6">
@@ -116,16 +134,20 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
             {success && (
               <Alert className="border-green-500 bg-green-50 text-green-900">
                 <CheckCircle className="h-4 w-4 text-green-600" />
-                <AlertDescription>Perfil atualizado com sucesso!</AlertDescription>
+                <AlertDescription>
+                  Perfil atualizado com sucesso!
+                </AlertDescription>
               </Alert>
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="name">Nome</Label>
+              <Label htmlFor="nome">Nome</Label>
               <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                id="nome"
+                value={formData.nome}
+                onChange={(e) =>
+                  setFormData({ ...formData, nome: e.target.value })
+                }
                 required
               />
             </div>
@@ -136,7 +158,9 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 required
               />
             </div>
@@ -151,7 +175,9 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
                     type="password"
                     placeholder="Deixe em branco para não alterar"
                     value={formData.newPassword}
-                    onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, newPassword: e.target.value })
+                    }
                   />
                 </div>
 
@@ -162,14 +188,19 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
                     type="password"
                     placeholder="Confirme a nova senha"
                     value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
                   />
                 </div>
               </div>
             </div>
 
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Salvando...' : 'Salvar Alterações'}
+              {loading ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </form>
         </CardContent>
@@ -178,41 +209,61 @@ export function ProfileForm({ user, onUpdate }: ProfileFormProps) {
       <Card>
         <CardHeader>
           <CardTitle>Informações da Conta</CardTitle>
-          <CardDescription>
-            Detalhes sobre sua conta no sistema
-          </CardDescription>
+          <CardDescription>Detalhes sobre sua conta no sistema</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-sm font-medium text-muted-foreground">ID do Usuário</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              ID do Usuário
+            </span>
             <span className="text-sm">{user.id}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-sm font-medium text-muted-foreground">Função</span>
-            <span className="text-sm capitalize">{user.role === 'admin' ? 'Administrador' : 'Comum'}</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Cargo
+            </span>
+            {/* Corrigido para user.cargo */}
+            <span className="text-sm capitalize">{user.cargo}</span>
           </div>
           <div className="flex justify-between items-center py-2 border-b">
-            <span className="text-sm font-medium text-muted-foreground">Membro desde</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Tipo de Permissão
+            </span>
+            {/* Corrigido para user.tipoUsuario */}
+            <span className="text-sm capitalize">{user.tipoUsuario}</span>
+          </div>
+          <div className="flex justify-between items-center py-2 border-b">
+            <span className="text-sm font-medium text-muted-foreground">
+              Membro desde
+            </span>
             <span className="text-sm">
-              {new Date(user.created_at).toLocaleDateString('pt-BR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              {/* Corrigido para user.createdAt (camelCase) */}
+              {user.createdAt
+                ? new Date(user.createdAt).toLocaleDateString("pt-BR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "-"}
             </span>
           </div>
           <div className="flex justify-between items-center py-2">
-            <span className="text-sm font-medium text-muted-foreground">Última atualização</span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Última atualização
+            </span>
             <span className="text-sm">
-              {new Date(user.updated_at).toLocaleDateString('pt-BR', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              {/* Corrigido para user.updatedAt (camelCase) */}
+              {user.updatedAt
+                ? new Date(user.updatedAt).toLocaleDateString("pt-BR", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })
+                : "-"}
             </span>
           </div>
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

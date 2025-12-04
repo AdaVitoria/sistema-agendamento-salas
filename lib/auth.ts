@@ -31,7 +31,7 @@ export async function verifyPassword(
 }
 
 // Busca usuário por email (usando a tabela correta 'usuario')
-export async function getUserByEmail(email: string) {
+export async function getUsuarioByEmail(email: string) {
   return prisma.usuario.findUnique({
     where: { email },
   });
@@ -54,7 +54,7 @@ export async function getUserById(id: number) {
 }
 
 // Criação de usuário
-export async function createUser(
+export async function createUsuario(
   email: string,
   password: string,
   nome: string,

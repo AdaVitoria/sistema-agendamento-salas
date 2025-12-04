@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { UserWithoutPassword } from '@/lib/db'
+import { useState } from "react";
+import { UserWithoutPassword } from "@/lib/db";
 import {
   Table,
   TableBody,
@@ -9,22 +9,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, UserPlus } from 'lucide-react'
-import { UserDialog } from './user-dialog'
-import { DeleteUserDialog } from './delete-user-dialog'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Edit, Trash2, UserPlus } from "lucide-react";
+import { UserDialog } from "./user-dialog";
+import { DeleteUserDialog } from "./delete-user-dialog";
 
 interface UserTableProps {
-  users: UserWithoutPassword[]
-  onUpdate: () => void
+  users: UserWithoutPassword[];
+  onUpdate: () => void;
 }
 
 export function UserTable({ users, onUpdate }: UserTableProps) {
-  const [editingUser, setEditingUser] = useState<UserWithoutPassword | null>(null)
-  const [deletingUser, setDeletingUser] = useState<UserWithoutPassword | null>(null)
-  const [isCreating, setIsCreating] = useState(false)
+  const [editingUser, setEditingUser] = useState<UserWithoutPassword | null>(
+    null
+  );
+  const [deletingUser, setDeletingUser] = useState<UserWithoutPassword | null>(
+    null
+  );
+  const [isCreating, setIsCreating] = useState(false);
 
   return (
     <div className="space-y-4">
@@ -52,15 +56,19 @@ export function UserTable({ users, onUpdate }: UserTableProps) {
             {users.map((user) => (
               <TableRow key={user.id}>
                 <TableCell className="font-medium">{user.id}</TableCell>
-                <TableCell>{user.name}</TableCell>
+                <TableCell>{user.tipoUsuario}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Badge variant={user.role === 'admin' ? 'default' : 'secondary'}>
-                    {user.role === 'admin' ? 'Administrador' : 'Comum'}
+                  <Badge
+                    variant={
+                      user.tipoUsuario === "admin" ? "default" : "secondary"
+                    }
+                  >
+                    {user.tipoUsuario === "admin" ? "Administrador" : "Comum"}
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  {new Date(user.createdAt).toLocaleDateString("pt-BR")}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
@@ -108,5 +116,5 @@ export function UserTable({ users, onUpdate }: UserTableProps) {
         user={deletingUser || undefined}
       />
     </div>
-  )
+  );
 }

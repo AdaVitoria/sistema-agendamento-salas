@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { UserWithoutPassword } from '@/lib/db'
+import { useState } from "react";
+import { UserWithoutPassword } from "@/lib/db";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -11,45 +11,50 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { Alert, AlertDescription } from '@/components/ui/alert'
+} from "@/components/ui/alert-dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DeleteUserDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  onSuccess: () => void
-  user?: UserWithoutPassword
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess: () => void;
+  user?: UserWithoutPassword;
 }
 
-export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: DeleteUserDialogProps) {
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+export function DeleteUserDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+  user,
+}: DeleteUserDialogProps) {
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
-    if (!user) return
+    if (!user) return;
 
-    setError('')
-    setLoading(true)
+    setError("");
+    setLoading(true);
 
     try {
       const response = await fetch(`/api/users/${user.id}`, {
-        method: 'DELETE',
-      })
+        method: "DELETE",
+      });
 
       if (!response.ok) {
-        const data = await response.json()
-        setError(data.error || 'Ocorreu um erro')
-        setLoading(false)
-        return
+        const data = await response.json();
+        setError(data.error || "Ocorreu um erro");
+        setLoading(false);
+        return;
       }
 
-      onSuccess()
-      onOpenChange(false)
+      onSuccess();
+      onOpenChange(false);
     } catch (err) {
-      setError('Erro ao conectar com o servidor')
-      setLoading(false)
+      setError("Erro ao conectar com o servidor");
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -57,8 +62,9 @@ export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: Delete
         <AlertDialogHeader>
           <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
           <AlertDialogDescription>
-            Tem certeza que deseja excluir o usuário <strong>{user?.name}</strong> ({user?.email})?
-            Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir o usuário{" "}
+            <strong>{user?.nome}</strong> ({user?.email})? Esta ação não pode
+            ser desfeita.
           </AlertDialogDescription>
         </AlertDialogHeader>
 
@@ -75,10 +81,10 @@ export function DeleteUserDialog({ open, onOpenChange, onSuccess, user }: Delete
             disabled={loading}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {loading ? 'Excluindo...' : 'Excluir'}
+            {loading ? "Excluindo..." : "Excluir"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 }
