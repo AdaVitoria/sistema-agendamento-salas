@@ -1,7 +1,13 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useState, useEffect } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -9,9 +15,9 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -19,138 +25,148 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { CheckCircle, XCircle, Clock } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Agendamento {
-  id: number
-  codigoAgendamento: string
-  nome: string
-  data: string
-  horaInicio: string
-  horaFim: string
-  status: string
+  id: number;
+  codigoAgendamento: string;
+  nome: string;
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+  status: string;
   criador: {
-    id: number
-    nome: string
-    email: string
-  }
+    id: number;
+    nome: string;
+    email: string;
+  };
   sala: {
-    id: number
-    nome: string
-    capacidade: number
-  }
+    id: number;
+    nome: string;
+    capacidade: number;
+  };
 }
 
 export function PainelAprovacoes() {
-  const { toast } = useToast()
-  const [agendamentosPendentes, setAgendamentosPendentes] = useState<Agendamento[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogRecusaAberto, setDialogRecusaAberto] = useState(false)
-  const [agendamentoSelecionado, setAgendamentoSelecionado] = useState<Agendamento | null>(null)
-  const [motivoRecusa, setMotivoRecusa] = useState('')
-  const [processando, setProcessando] = useState(false)
+  const { toast } = useToast();
+  const [agendamentosPendentes, setAgendamentosPendentes] = useState<
+    Agendamento[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogRecusaAberto, setDialogRecusaAberto] = useState(false);
+  const [agendamentoSelecionado, setAgendamentoSelecionado] =
+    useState<Agendamento | null>(null);
+  const [motivoRecusa, setMotivoRecusa] = useState("");
+  const [processando, setProcessando] = useState(false);
 
   useEffect(() => {
-    carregarPendentes()
-  }, [])
+    carregarPendentes();
+  }, []);
 
   async function carregarPendentes() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await fetch('/api/agendamentos?status=pendente')
-      const data = await response.json()
-      setAgendamentosPendentes(data)
+      const response = await fetch("/api/agendamentos?status=pendente");
+      const data = await response.json();
+      setAgendamentosPendentes(data);
     } catch (error) {
-      console.error('Erro ao carregar pendentes:', error)
+      console.error("Erro ao carregar pendentes:", error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar as solicitações pendentes',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        description: "Não foi possível carregar as solicitações pendentes",
+        variant: "destructive",
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   async function aprovarAgendamento(agendamento: Agendamento) {
-    setProcessando(true)
+    setProcessando(true);
     try {
       const response = await fetch(`/api/agendamentos/${agendamento.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'ativo' })
-      })
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ativo" }),
+      });
 
       if (!response.ok) {
-        throw new Error('Erro ao aprovar agendamento')
+        throw new Error("Erro ao aprovar agendamento");
       }
 
       toast({
-        title: 'Agendamento aprovado',
+        title: "Agendamento aprovado",
         description: `A reunião "${agendamento.nome}" foi aprovada com sucesso`,
-      })
+      });
 
       // Remover da lista
-      setAgendamentosPendentes(prev => prev.filter(a => a.id !== agendamento.id))
+      setAgendamentosPendentes((prev) =>
+        prev.filter((a) => a.id !== agendamento.id)
+      );
     } catch (error) {
-      console.error('Erro ao aprovar:', error)
+      console.error("Erro ao aprovar:", error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível aprovar o agendamento',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        description: "Não foi possível aprovar o agendamento",
+        variant: "destructive",
+      });
     } finally {
-      setProcessando(false)
+      setProcessando(false);
     }
   }
 
   function abrirDialogRecusa(agendamento: Agendamento) {
-    setAgendamentoSelecionado(agendamento)
-    setMotivoRecusa('')
-    setDialogRecusaAberto(true)
+    setAgendamentoSelecionado(agendamento);
+    setMotivoRecusa("");
+    setDialogRecusaAberto(true);
   }
 
   async function confirmarRecusa() {
-    if (!agendamentoSelecionado) return
+    if (!agendamentoSelecionado) return;
 
-    setProcessando(true)
+    setProcessando(true);
     try {
-      const response = await fetch(`/api/agendamentos/${agendamentoSelecionado.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          status: 'cancelado',
-          motivo: motivoRecusa || 'Sem motivo especificado'
-        })
-      })
+      const response = await fetch(
+        `/api/agendamentos/${agendamentoSelecionado.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            status: "cancelado",
+            motivo: motivoRecusa || "Sem motivo especificado",
+          }),
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Erro ao recusar agendamento')
+        throw new Error("Erro ao recusar agendamento");
       }
 
       toast({
-        title: 'Agendamento recusado',
+        title: "Agendamento recusado",
         description: `A solicitação de "${agendamentoSelecionado.nome}" foi recusada`,
-      })
+      });
 
       // Remover da lista
-      setAgendamentosPendentes(prev => prev.filter(a => a.id !== agendamentoSelecionado.id))
-      setDialogRecusaAberto(false)
+      setAgendamentosPendentes((prev) =>
+        prev.filter((a) => a.id !== agendamentoSelecionado.id)
+      );
+      setDialogRecusaAberto(false);
     } catch (error) {
-      console.error('Erro ao recusar:', error)
+      console.error("Erro ao recusar:", error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível recusar o agendamento',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        description: "Não foi possível recusar o agendamento",
+        variant: "destructive",
+      });
     } finally {
-      setProcessando(false)
+      setProcessando(false);
     }
   }
 
@@ -159,11 +175,13 @@ export function PainelAprovacoes() {
       <Card>
         <CardContent className="p-8">
           <div className="flex items-center justify-center">
-            <div className="text-muted-foreground">Carregando solicitações...</div>
+            <div className="text-muted-foreground">
+              Carregando solicitações...
+            </div>
           </div>
         </CardContent>
       </Card>
-    )
+    );
   }
 
   return (
@@ -206,12 +224,16 @@ export function PainelAprovacoes() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {agendamentosPendentes.map(agendamento => (
+                  {agendamentosPendentes.map((agendamento) => (
                     <TableRow key={agendamento.id}>
-                      <TableCell className="font-medium">{agendamento.nome}</TableCell>
+                      <TableCell className="font-medium">
+                        {agendamento.nome}
+                      </TableCell>
                       <TableCell>
                         <div>
-                          <div className="text-sm">{agendamento.criador.nome}</div>
+                          <div className="text-sm">
+                            {agendamento.criador.nome}
+                          </div>
                           <div className="text-xs text-muted-foreground">
                             {agendamento.criador.email}
                           </div>
@@ -219,10 +241,18 @@ export function PainelAprovacoes() {
                       </TableCell>
                       <TableCell>{agendamento.sala.nome}</TableCell>
                       <TableCell>
-                        {format(new Date(agendamento.data), 'dd/MM/yyyy', { locale: ptBR })}
+                        {format(new Date(agendamento.data), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
                       </TableCell>
                       <TableCell>
-                        {agendamento.horaInicio.slice(0, 5)} - {agendamento.horaFim.slice(0, 5)}
+                        {format(new Date(agendamento.horaInicio), "HH:mm", {
+                          locale: ptBR,
+                        })}{" "}
+                        -{" "}
+                        {format(new Date(agendamento.horaFim), "HH:mm", {
+                          locale: ptBR,
+                        })}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
@@ -262,14 +292,17 @@ export function PainelAprovacoes() {
           <DialogHeader>
             <DialogTitle>Recusar Agendamento</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja recusar esta solicitação? Você pode fornecer um motivo opcional.
+              Tem certeza que deseja recusar esta solicitação? Você pode
+              fornecer um motivo opcional.
             </DialogDescription>
           </DialogHeader>
 
           {agendamentoSelecionado && (
             <div className="space-y-4">
               <div className="p-3 bg-muted rounded-md">
-                <div className="font-semibold">{agendamentoSelecionado.nome}</div>
+                <div className="font-semibold">
+                  {agendamentoSelecionado.nome}
+                </div>
                 <div className="text-sm text-muted-foreground mt-1">
                   Solicitado por: {agendamentoSelecionado.criador.nome}
                 </div>
@@ -302,11 +335,11 @@ export function PainelAprovacoes() {
               onClick={confirmarRecusa}
               disabled={processando}
             >
-              {processando ? 'Recusando...' : 'Confirmar Recusa'}
+              {processando ? "Recusando..." : "Confirmar Recusa"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }
