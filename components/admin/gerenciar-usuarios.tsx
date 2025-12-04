@@ -1,6 +1,6 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -8,8 +8,8 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -17,177 +17,224 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Pencil, Trash2, Plus, Shield, User } from 'lucide-react'
-import { useToast } from '@/hooks/use-toast'
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, Plus, Shield, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface Usuario {
-  id: number
-  email: string
-  nome: string
-  cargo: string
-  tipoUsuario: string
+  id: number;
+  email: string;
+  nome: string;
+  cargo: string;
+  tipoUsuario: string;
 }
 
 interface GerenciarUsuariosProps {
-  usuarioLogadoId: number
+  usuarioLogadoId: number;
 }
 
 export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
-  const { toast } = useToast()
-  const [usuarios, setUsuarios] = useState<Usuario[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogAberto, setDialogAberto] = useState(false)
-  const [dialogDeleteAberto, setDialogDeleteAberto] = useState(false)
-  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null)
-  const [usuarioParaDeletar, setUsuarioParaDeletar] = useState<Usuario | null>(null)
-  const [processando, setProcessando] = useState(false)
+  const { toast } = useToast();
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogAberto, setDialogAberto] = useState(false);
+  const [dialogDeleteAberto, setDialogDeleteAberto] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState<Usuario | null>(null);
+  const [usuarioParaDeletar, setUsuarioParaDeletar] = useState<Usuario | null>(
+    null
+  );
+  const [processando, setProcessando] = useState(false);
 
   const [formData, setFormData] = useState({
-    email: '',
-    nome: '',
-    cargo: '',
-    tipoUsuario: '',
-    password: ''
-  })
+    email: "",
+    nome: "",
+    cargo: "",
+    tipoUsuario: "",
+    password: "",
+  });
 
   useEffect(() => {
-    carregarUsuarios()
-  }, [])
+    carregarUsuarios();
+  }, []);
 
   async function carregarUsuarios() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await fetch('/api/usuarios')
-      const data = await response.json()
-      setUsuarios(data)
+      const response = await fetch("/api/usuarios");
+
+      // 1. Verifique se a resposta foi bem-sucedida ANTES de fazer o parse
+      if (!response.ok) {
+        // Tenta ler a mensagem de erro da API, se houver
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Falha ao buscar usuários");
+      }
+
+      const data = await response.json();
+
+      // 2. Garanta que 'data' é um array antes de setar
+      if (Array.isArray(data)) {
+        setUsuarios(data);
+      } else if (data.usuarios && Array.isArray(data.usuarios)) {
+        // Caso a API retorne { usuarios: [...] }
+        setUsuarios(data.usuarios);
+      } else {
+        console.error("Formato inesperado recebido:", data);
+        setUsuarios([]); // Evita o crash setando array vazio
+      }
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      console.error("Erro ao carregar usuários:", error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os usuários',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        description: "Não foi possível carregar os usuários",
+        variant: "destructive",
+      });
+      setUsuarios([]); // Garante que não quebre a tela em caso de erro
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   function abrirDialogNovo() {
-    setUsuarioEditando(null)
-    setFormData({ email: '', nome: '', cargo: '', tipoUsuario: '', password: '' })
-    setDialogAberto(true)
+    setUsuarioEditando(null);
+    setFormData({
+      email: "",
+      nome: "",
+      cargo: "",
+      tipoUsuario: "",
+      password: "",
+    });
+    setDialogAberto(true);
   }
 
   function abrirDialogEditar(usuario: Usuario) {
-    setUsuarioEditando(usuario)
+    setUsuarioEditando(usuario);
     setFormData({
       email: usuario.email,
       nome: usuario.nome,
       cargo: usuario.cargo,
       tipoUsuario: usuario.tipoUsuario,
-      password: ''
-    })
-    setDialogAberto(true)
+      password: "",
+    });
+    setDialogAberto(true);
   }
 
   function abrirDialogDeletar(usuario: Usuario) {
-    setUsuarioParaDeletar(usuario)
-    setDialogDeleteAberto(true)
+    setUsuarioParaDeletar(usuario);
+    setDialogDeleteAberto(true);
   }
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setProcessando(true)
+    e.preventDefault();
+    setProcessando(true);
 
     try {
-      const url = usuarioEditando ? `/api/usuarios/${usuarioEditando.id}` : '/api/usuarios'
-      const method = usuarioEditando ? 'PUT' : 'POST'
+      const url = usuarioEditando
+        ? `/api/usuarios/${usuarioEditando.id}`
+        : "/api/usuarios";
+      const method = usuarioEditando ? "PUT" : "POST";
 
-      const body: any = { ...formData }
+      const body: any = { ...formData };
       // Não enviar senha vazia em edição
       if (usuarioEditando && !formData.password) {
-        delete body.password
+        delete body.password;
       }
 
       const response = await fetch(url, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-      })
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || 'Erro ao salvar usuário')
+        throw new Error(result.error || "Erro ao salvar usuário");
       }
 
       toast({
-        title: usuarioEditando ? 'Usuário atualizado' : 'Usuário criado',
-        description: `O usuário "${formData.nome}" foi ${usuarioEditando ? 'atualizado' : 'criado'} com sucesso`,
-      })
+        title: usuarioEditando ? "Usuário atualizado" : "Usuário criado",
+        description: `O usuário "${formData.nome}" foi ${
+          usuarioEditando ? "atualizado" : "criado"
+        } com sucesso`,
+      });
 
-      setDialogAberto(false)
-      carregarUsuarios()
+      setDialogAberto(false);
+      carregarUsuarios();
     } catch (error: any) {
-      console.error('Erro ao salvar usuário:', error)
+      console.error("Erro ao salvar usuário:", error);
       toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível salvar o usuário',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        description: error.message || "Não foi possível salvar o usuário",
+        variant: "destructive",
+      });
     } finally {
-      setProcessando(false)
+      setProcessando(false);
     }
   }
 
   async function confirmarDelete() {
-    if (!usuarioParaDeletar) return
+    if (!usuarioParaDeletar) return;
 
     if (usuarioParaDeletar.id === usuarioLogadoId) {
       toast({
-        title: 'Erro',
-        description: 'Você não pode deletar seu próprio usuário',
-        variant: 'destructive'
-      })
-      return
+        title: "Erro",
+        description: "Você não pode deletar seu próprio usuário",
+        variant: "destructive",
+      });
+      return;
     }
 
-    setProcessando(true)
+    setProcessando(true);
     try {
       const response = await fetch(`/api/usuarios/${usuarioParaDeletar.id}`, {
-        method: 'DELETE'
-      })
+        method: "DELETE",
+      });
+
+      // 1. Tente ler o JSON da resposta, mesmo se deu erro
+      const data = await response.json();
 
       if (!response.ok) {
-        throw new Error('Erro ao deletar usuário')
+        // 2. Use a mensagem que veio da API (data.error) ou um fallback
+        throw new Error(data.error || "Erro ao deletar usuário");
       }
 
       toast({
-        title: 'Usuário deletado',
+        title: "Usuário deletado",
         description: `O usuário "${usuarioParaDeletar.nome}" foi deletado com sucesso`,
-      })
+      });
 
-      setDialogDeleteAberto(false)
-      carregarUsuarios()
-    } catch (error) {
-      console.error('Erro ao deletar usuário:', error)
+      setDialogDeleteAberto(false);
+      carregarUsuarios();
+    } catch (error: any) {
+      // Tipagem 'any' para acessar .message
+      console.error("Erro ao deletar usuário:", error);
       toast({
-        title: 'Erro',
-        description: 'Não foi possível deletar o usuário',
-        variant: 'destructive'
-      })
+        title: "Erro",
+        // 3. Agora error.message contém o texto correto vindo do backend
+        description: error.message || "Não foi possível deletar o usuário",
+        variant: "destructive",
+      });
     } finally {
-      setProcessando(false)
+      setProcessando(false);
     }
   }
 
   if (loading) {
-    return <div className="text-center py-8 text-muted-foreground">Carregando usuários...</div>
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        Carregando usuários...
+      </div>
+    );
   }
 
   return (
@@ -218,14 +265,20 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usuarios.map(usuario => (
+              {usuarios.map((usuario) => (
                 <TableRow key={usuario.id}>
                   <TableCell className="font-medium">{usuario.email}</TableCell>
                   <TableCell>{usuario.nome}</TableCell>
                   <TableCell>{usuario.cargo}</TableCell>
                   <TableCell>
-                    <Badge variant={usuario.tipoUsuario === 'Admin' ? 'default' : 'secondary'}>
-                      {usuario.tipoUsuario === 'Admin' ? (
+                    <Badge
+                      variant={
+                        usuario.tipoUsuario === "Admin"
+                          ? "default"
+                          : "secondary"
+                      }
+                    >
+                      {usuario.tipoUsuario === "Admin" ? (
                         <Shield className="h-3 w-3 mr-1" />
                       ) : (
                         <User className="h-3 w-3 mr-1" />
@@ -263,10 +316,10 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{usuarioEditando ? 'Editar Usuário' : 'Novo Usuário'}</DialogTitle>
-            <DialogDescription>
-              Preencha os dados do usuário
-            </DialogDescription>
+            <DialogTitle>
+              {usuarioEditando ? "Editar Usuário" : "Novo Usuário"}
+            </DialogTitle>
+            <DialogDescription>Preencha os dados do usuário</DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -276,7 +329,9 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
                 id="email"
                 type="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
                 placeholder="usuario@empresa.com"
                 required
               />
@@ -287,19 +342,25 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
               <Input
                 id="nome"
                 value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, nome: e.target.value })
+                }
                 placeholder="Nome do usuário"
                 required
               />
             </div>
 
             <div>
-              <Label htmlFor="password">Senha {usuarioEditando && '(deixe em branco para manter)'}</Label>
+              <Label htmlFor="password">
+                Senha {usuarioEditando && "(deixe em branco para manter)"}
+              </Label>
               <Input
                 id="password"
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 placeholder="Mínimo 6 caracteres"
                 required={!usuarioEditando}
               />
@@ -307,9 +368,11 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
 
             <div>
               <Label htmlFor="cargo">Cargo</Label>
-              <Select 
-                value={formData.cargo} 
-                onValueChange={(value) => setFormData({ ...formData, cargo: value })}
+              <Select
+                value={formData.cargo}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, cargo: value })
+                }
                 required
               >
                 <SelectTrigger id="cargo">
@@ -326,9 +389,11 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
 
             <div>
               <Label htmlFor="tipoUsuario">Tipo de Usuário</Label>
-              <Select 
-                value={formData.tipoUsuario} 
-                onValueChange={(value) => setFormData({ ...formData, tipoUsuario: value })}
+              <Select
+                value={formData.tipoUsuario}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, tipoUsuario: value })
+                }
                 required
               >
                 <SelectTrigger id="tipoUsuario">
@@ -351,7 +416,7 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
                 Cancelar
               </Button>
               <Button type="submit" disabled={processando}>
-                {processando ? 'Salvando...' : 'Salvar'}
+                {processando ? "Salvando..." : "Salvar"}
               </Button>
             </DialogFooter>
           </form>
@@ -364,7 +429,8 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
           <DialogHeader>
             <DialogTitle>Confirmar Exclusão</DialogTitle>
             <DialogDescription>
-              Tem certeza que deseja deletar o usuário "{usuarioParaDeletar?.nome}"? Esta ação não pode ser desfeita.
+              Tem certeza que deseja deletar o usuário "
+              {usuarioParaDeletar?.nome}"? Esta ação não pode ser desfeita.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -380,11 +446,11 @@ export function GerenciarUsuarios({ usuarioLogadoId }: GerenciarUsuariosProps) {
               onClick={confirmarDelete}
               disabled={processando}
             >
-              {processando ? 'Deletando...' : 'Deletar'}
+              {processando ? "Deletando..." : "Deletar"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
-  )
+  );
 }

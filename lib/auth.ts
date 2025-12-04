@@ -1,5 +1,5 @@
 import bcrypt from "bcryptjs";
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 
 // Configuração do Prisma Client (Singleton)
 const globalForPrisma = globalThis as unknown as {
@@ -129,9 +129,24 @@ export async function updateUser(
 
 // Deleção de usuário
 export async function deleteUser(id: number): Promise<void> {
-  await prisma.usuario.delete({
-    where: { id },
-  });
+  try {
+    await prisma.usuario.delete({
+      where: { id },
+    });
+  } catch (error) {
+    // Verifica se é um erro conhecido do Prisma
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // P2003 significa violação de chave estrangeira (tem dados vinculados)
+      if (error.code === "P2003") {
+        throw new Error(
+          "Não é possível excluir: Este usuário possui agendamentos, salas ou registros vinculados no sistema."
+        );
+      }
+    }
+
+    // Se for outro erro, lança pra frente
+    throw error;
+  }
 }
 
 // Listar todos os usuários

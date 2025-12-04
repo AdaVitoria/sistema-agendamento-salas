@@ -20,7 +20,7 @@ export async function GET(
 
     // Corrigido: tipoUsuario minúsculo ou maiúsculo dependendo do seu banco,
     // mas mantendo sua lógica atual:
-    if (session.user.tipoUsuario !== "admin" && session.user.id !== userId) {
+    if (session.user.tipoUsuario !== "Admin" && session.user.id !== userId) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
 
