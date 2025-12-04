@@ -138,7 +138,7 @@ npm run dev
 
 ## 📁 Estrutura de Pastas
 
-\`\`\`
+```
 ├── app/
 │   ├── api/
 │   │   ├── auth/              # Autenticação (login, registro)
@@ -163,7 +163,7 @@ npm run dev
 ├── prisma/
 │   └── schema.prisma          # Schema do banco
 └── middleware.ts              # Proteção de rotas
-\`\`\`
+```
 
 ## 🎯 Casos de Uso
 
