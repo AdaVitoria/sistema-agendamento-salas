@@ -1,152 +1,75 @@
-import bcrypt from 'bcryptjs'
-import { prisma } from './db'
-import type { User, Usuario } from '@prisma/client'
+import bcrypt from "bcryptjs";
+import { PrismaClient } from "@prisma/client";
+
+// Configuração do Prisma Client (Singleton)
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log:
+      process.env.NODE_ENV === "development"
+        ? ["query", "error", "warn"]
+        : ["error"],
+  });
+
+if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+
+// --- Funções de Autenticação e Usuário ---
 
 export async function hashPassword(password: string): Promise<string> {
-  return bcrypt.hash(password, 10)
+  return bcrypt.hash(password, 10);
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-  return bcrypt.compare(password, hash)
-}
-
-export async function getUserByEmail(email: string): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: { email }
-  })
-}
-
-export async function getUserById(id: number) {
-  return prisma.user.findUnique({
-    where: { id },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true
-    }
-  })
-}
-
-export async function createUser(
-  email: string,
+export async function verifyPassword(
   password: string,
-  name: string,
-  role: 'admin' | 'common' = 'common'
-) {
-  const passwordHash = await hashPassword(password)
-  
-  return prisma.user.create({
-    data: {
-      email,
-      passwordHash,
-      name,
-      role
-    },
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true
-    }
-  })
+  hash: string
+): Promise<boolean> {
+  return bcrypt.compare(password, hash);
 }
 
-export async function updateUser(
-  id: number,
-  data: { name?: string; email?: string; password?: string }
-) {
-  const updateData: any = {}
-  
-  if (data.name !== undefined) {
-    updateData.name = data.name
-  }
-  
-  if (data.email !== undefined) {
-    updateData.email = data.email
-  }
-  
-  if (data.password !== undefined) {
-    updateData.passwordHash = await hashPassword(data.password)
-  }
-  
-  return prisma.user.update({
-    where: { id },
-    data: updateData,
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true
-    }
-  })
-}
-
-export async function deleteUser(id: number): Promise<void> {
-  await prisma.user.delete({
-    where: { id }
-  })
-}
-
-export async function getAllUsers() {
-  return prisma.user.findMany({
-    select: {
-      id: true,
-      email: true,
-      name: true,
-      role: true,
-      createdAt: true,
-      updatedAt: true
-    },
-    orderBy: {
-      createdAt: 'desc'
-    }
-  })
-}
-
-export async function getUsuarioByEmail(email: string): Promise<Usuario | null> {
+// Busca usuário por email (usando a tabela correta 'usuario')
+export async function getUserByEmail(email: string) {
   return prisma.usuario.findUnique({
-    where: { email }
-  })
+    where: { email },
+  });
 }
 
-export async function getUsuarioById(id: number): Promise<Usuario | null> {
+// Busca usuário por ID
+export async function getUserById(id: number) {
   return prisma.usuario.findUnique({
     where: { id },
     select: {
       id: true,
       email: true,
-      nome: true,
+      nome: true, // Note que o banco usa 'nome', não 'name'
       cargo: true,
       tipoUsuario: true,
       createdAt: true,
-      updatedAt: true
-    }
-  })
+      updatedAt: true,
+    },
+  });
 }
 
-export async function createUsuario(
+// Criação de usuário
+export async function createUser(
   email: string,
   password: string,
   nome: string,
-  cargo: 'Diretor' | 'Gerente' | 'Coordenador' | 'Funcionario' = 'Funcionario',
-  tipoUsuario: 'Admin' | 'Comum' = 'Comum'
+  cargo: "Diretor" | "Gerente" | "Coordenador" | "Funcionario" = "Funcionario",
+  tipoUsuario: "Admin" | "Comum" = "Comum"
 ) {
-  const passwordHash = await hashPassword(password)
-  
+  const passwordHash = await hashPassword(password);
+
   return prisma.usuario.create({
     data: {
       email,
       passwordHash,
       nome,
       cargo,
-      tipoUsuario
+      tipoUsuario,
     },
     select: {
       id: true,
@@ -155,37 +78,40 @@ export async function createUsuario(
       cargo: true,
       tipoUsuario: true,
       createdAt: true,
-      updatedAt: true
-    }
-  })
+      updatedAt: true,
+    },
+  });
 }
 
-export async function updateUsuario(
+// Atualização de usuário
+// A função aceita 'any' no data para ser flexível com o que vem do frontend,
+// mas mapeia corretamente para os campos do banco em português.
+export async function updateUser(
   id: number,
-  data: { nome?: string; email?: string; password?: string; cargo?: string; tipoUsuario?: string }
+  data: {
+    nome?: string;
+    name?: string;
+    email?: string;
+    password?: string;
+    cargo?: string;
+    tipoUsuario?: string;
+  }
 ) {
-  const updateData: any = {}
-  
-  if (data.nome !== undefined) {
-    updateData.nome = data.nome
-  }
-  
-  if (data.email !== undefined) {
-    updateData.email = data.email
-  }
-  
+  const updateData: any = {};
+
+  // Mapeia 'name' (se vier do frontend em inglês) ou 'nome' para o campo 'nome' do banco
+  if (data.nome !== undefined) updateData.nome = data.nome;
+  if (data.name !== undefined) updateData.nome = data.name;
+
+  if (data.email !== undefined) updateData.email = data.email;
+
   if (data.password !== undefined) {
-    updateData.passwordHash = await hashPassword(data.password)
+    updateData.passwordHash = await hashPassword(data.password);
   }
 
-  if (data.cargo !== undefined) {
-    updateData.cargo = data.cargo
-  }
+  if (data.cargo !== undefined) updateData.cargo = data.cargo;
+  if (data.tipoUsuario !== undefined) updateData.tipoUsuario = data.tipoUsuario;
 
-  if (data.tipoUsuario !== undefined) {
-    updateData.tipoUsuario = data.tipoUsuario
-  }
-  
   return prisma.usuario.update({
     where: { id },
     data: updateData,
@@ -196,18 +122,20 @@ export async function updateUsuario(
       cargo: true,
       tipoUsuario: true,
       createdAt: true,
-      updatedAt: true
-    }
-  })
+      updatedAt: true,
+    },
+  });
 }
 
-export async function deleteUsuario(id: number): Promise<void> {
+// Deleção de usuário
+export async function deleteUser(id: number): Promise<void> {
   await prisma.usuario.delete({
-    where: { id }
-  })
+    where: { id },
+  });
 }
 
-export async function getAllUsuarios() {
+// Listar todos os usuários
+export async function getAllUsers() {
   return prisma.usuario.findMany({
     select: {
       id: true,
@@ -216,10 +144,10 @@ export async function getAllUsuarios() {
       cargo: true,
       tipoUsuario: true,
       createdAt: true,
-      updatedAt: true
+      updatedAt: true,
     },
     orderBy: {
-      createdAt: 'desc'
-    }
-  })
+      createdAt: "desc",
+    },
+  });
 }
