@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
+
+import { getSession, createUsuarioSession } from "@/lib/session";
 import { getUserById, updateUser, deleteUser } from "@/lib/auth";
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ... (código do GET continua igual)
   try {
     const session = await getSession();
 
@@ -16,6 +18,8 @@ export async function GET(
     const { id } = await params;
     const userId = parseInt(id);
 
+    // Corrigido: tipoUsuario minúsculo ou maiúsculo dependendo do seu banco,
+    // mas mantendo sua lógica atual:
     if (session.user.tipoUsuario !== "admin" && session.user.id !== userId) {
       return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
     }
@@ -58,11 +62,22 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const user = await updateUser(userId, body);
 
-    return NextResponse.json({ user });
+    // 1. Atualiza no Banco de Dados
+    const updatedUser = await updateUser(userId, body);
+
+    // 2. LÓGICA NOVA: Atualizar a sessão se for o próprio usuário
+    // Se um Admin estiver editando outro usuário, NÃO atualizamos a sessão do Admin
+    // Se o usuário estiver editando a si mesmo, atualizamos o cookie dele
+    if (session.user.id === userId) {
+      // Convertemos para 'any' ou o tipo correto pois o updateUser retorna um objeto
+      // compatível com o que o createUsuarioSession espera
+      await createUsuarioSession(updatedUser as any);
+    }
+
+    return NextResponse.json({ user: updatedUser });
   } catch (error) {
-    console.error("[v0] Update user error:", error);
+    console.error("Update user error:", error);
     return NextResponse.json(
       { error: "Erro ao atualizar usuário" },
       { status: 500 }
@@ -74,6 +89,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  // ... (código do DELETE continua igual)
   try {
     const session = await getSession();
 
