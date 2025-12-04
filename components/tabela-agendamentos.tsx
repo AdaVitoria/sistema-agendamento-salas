@@ -1,97 +1,122 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Calendar, Clock, MapPin, Users, ChevronLeft, ChevronRight } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
+import { useState, useEffect } from "react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  Users,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Agendamento {
-  id: number
-  codigoAgendamento: string
-  nome: string
-  data: string
-  horaInicio: string
-  horaFim: string
-  status: "ativo" | "pendente" | "cancelado"
+  id: number;
+  codigoAgendamento: string;
+  nome: string;
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+  status: "ativo" | "pendente" | "cancelado";
   criador: {
-    id: number
-    nome: string
-    email: string
-  }
+    id: number;
+    nome: string;
+    email: string;
+  };
   sala: {
-    id: number
-    nome: string
-    capacidade: number
-    tipoSala: string
-  }
+    id: number;
+    nome: string;
+    capacidade: number;
+    tipoSala: string;
+  };
   participantes: Array<{
     usuario: {
-      id: number
-      nome: string
-      email: string
-    }
-  }>
+      id: number;
+      nome: string;
+      email: string;
+    };
+  }>;
 }
 
 interface TabelaAgendamentosProps {
-  onClickAgendamento: (agendamento: Agendamento) => void
+  onClickAgendamento: (agendamento: Agendamento) => void;
 }
 
-export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosProps) {
-  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([])
-  const [loading, setLoading] = useState(true)
-  const [filtroStatus, setFiltroStatus] = useState<string>("todos")
-  const [paginaAtual, setPaginaAtual] = useState(1)
-  const itensPorPagina = 10
+export function TabelaAgendamentos({
+  onClickAgendamento,
+}: TabelaAgendamentosProps) {
+  const [agendamentos, setAgendamentos] = useState<Agendamento[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 10;
 
   useEffect(() => {
-    carregarAgendamentos()
-  }, [])
+    carregarAgendamentos();
+  }, []);
 
   async function carregarAgendamentos() {
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await fetch("/api/agendamentos")
+      const response = await fetch("/api/agendamentos");
       if (response.ok) {
-        const data = await response.json()
+        const data = await response.json();
         // Ordenar por data e hora
         const ordenados = data.sort((a: Agendamento, b: Agendamento) => {
-          const dataA = new Date(`${a.data}T${a.horaInicio}`)
-          const dataB = new Date(`${b.data}T${b.horaInicio}`)
-          return dataB.getTime() - dataA.getTime()
-        })
-        setAgendamentos(ordenados)
+          const dataA = new Date(`${a.data}T${a.horaInicio}`);
+          const dataB = new Date(`${b.data}T${b.horaInicio}`);
+          return dataB.getTime() - dataA.getTime();
+        });
+        setAgendamentos(ordenados);
       }
     } catch (error) {
-      console.error("Erro ao carregar agendamentos:", error)
+      console.error("Erro ao carregar agendamentos:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
   const agendamentosFiltrados = agendamentos.filter((agendamento) => {
-    if (filtroStatus === "todos") return true
-    return agendamento.status === filtroStatus
-  })
+    if (filtroStatus === "todos") return true;
+    return agendamento.status === filtroStatus;
+  });
 
-  const totalPaginas = Math.ceil(agendamentosFiltrados.length / itensPorPagina)
-  const indiceInicio = (paginaAtual - 1) * itensPorPagina
-  const indiceFim = indiceInicio + itensPorPagina
-  const agendamentosPaginados = agendamentosFiltrados.slice(indiceInicio, indiceFim)
+  const totalPaginas = Math.ceil(agendamentosFiltrados.length / itensPorPagina);
+  const indiceInicio = (paginaAtual - 1) * itensPorPagina;
+  const indiceFim = indiceInicio + itensPorPagina;
+  const agendamentosPaginados = agendamentosFiltrados.slice(
+    indiceInicio,
+    indiceFim
+  );
 
   function proximaPagina() {
     if (paginaAtual < totalPaginas) {
-      setPaginaAtual(paginaAtual + 1)
+      setPaginaAtual(paginaAtual + 1);
     }
   }
 
   function paginaAnterior() {
     if (paginaAtual > 1) {
-      setPaginaAtual(paginaAtual - 1)
+      setPaginaAtual(paginaAtual - 1);
     }
   }
 
@@ -100,7 +125,7 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
       <div className="flex items-center justify-center p-8">
         <div className="text-muted-foreground">Carregando agendamentos...</div>
       </div>
-    )
+    );
   }
 
   return (
@@ -108,12 +133,14 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
       {/* Filtros */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="text-sm font-medium text-muted-foreground">Status:</div>
+          <div className="text-sm font-medium text-muted-foreground">
+            Status:
+          </div>
           <Select
             value={filtroStatus}
             onValueChange={(value) => {
-              setFiltroStatus(value)
-              setPaginaAtual(1)
+              setFiltroStatus(value);
+              setPaginaAtual(1);
             }}
           >
             <SelectTrigger className="w-[160px]">
@@ -128,7 +155,8 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
           </Select>
         </div>
         <div className="text-sm text-muted-foreground font-medium">
-          {agendamentosFiltrados.length} {agendamentosFiltrados.length === 1 ? "agendamento" : "agendamentos"}
+          {agendamentosFiltrados.length}{" "}
+          {agendamentosFiltrados.length === 1 ? "agendamento" : "agendamentos"}
         </div>
       </div>
 
@@ -154,8 +182,12 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                 <TableCell colSpan={9} className="text-center py-12">
                   <div className="flex flex-col items-center gap-2">
                     <Calendar className="h-12 w-12 text-muted-foreground/50" />
-                    <p className="text-muted-foreground font-medium">Nenhum agendamento encontrado</p>
-                    <p className="text-sm text-muted-foreground">Crie um novo agendamento para começar</p>
+                    <p className="text-muted-foreground font-medium">
+                      Nenhum agendamento encontrado
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Crie um novo agendamento para começar
+                    </p>
                   </div>
                 </TableCell>
               </TableRow>
@@ -178,8 +210,12 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                       </div>
                       <div>
-                        <div className="font-medium text-sm">{agendamento.sala.nome}</div>
-                        <div className="text-xs text-muted-foreground">Cap. {agendamento.sala.capacidade}</div>
+                        <div className="font-medium text-sm">
+                          {agendamento.sala.nome}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Cap. {agendamento.sala.capacidade}
+                        </div>
                       </div>
                     </div>
                   </TableCell>
@@ -187,7 +223,9 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                     <div className="flex items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="text-sm">
-                        {format(new Date(agendamento.data), "dd/MM/yyyy", { locale: ptBR })}
+                        {format(new Date(agendamento.data), "dd/MM/yyyy", {
+                          locale: ptBR,
+                        })}
                       </span>
                     </div>
                   </TableCell>
@@ -195,13 +233,21 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                     <div className="flex items-center gap-2">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       <span className="text-sm font-mono">
-                        {agendamento.horaInicio.slice(0, 5)} - {agendamento.horaFim.slice(0, 5)}
+                        {format(new Date(agendamento.horaInicio), "HH:mm", {
+                          locale: ptBR,
+                        })}{" "}
+                        -{" "}
+                        {format(new Date(agendamento.horaFim), "HH:mm", {
+                          locale: ptBR,
+                        })}
                       </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className="font-medium text-sm">{agendamento.criador.nome}</div>
+                      <div className="font-medium text-sm">
+                        {agendamento.criador.nome}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate max-w-[150px]">
                         {agendamento.criador.email}
                       </div>
@@ -210,7 +256,9 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Users className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-sm font-medium">{agendamento.participantes?.length || 0}</span>
+                      <span className="text-sm font-medium">
+                        {agendamento.participantes?.length || 0}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -219,16 +267,16 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
                         agendamento.status === "ativo"
                           ? "default"
                           : agendamento.status === "pendente"
-                            ? "secondary"
-                            : "outline"
+                          ? "secondary"
+                          : "outline"
                       }
                       className="font-medium"
                     >
                       {agendamento.status === "ativo"
                         ? "Ativo"
                         : agendamento.status === "pendente"
-                          ? "Pendente"
-                          : "Cancelado"}
+                        ? "Pendente"
+                        : "Cancelado"}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -274,5 +322,5 @@ export function TabelaAgendamentos({ onClickAgendamento }: TabelaAgendamentosPro
         </div>
       )}
     </div>
-  )
+  );
 }
